@@ -1,4 +1,5 @@
 let csvDataObject = {};
+let providers = [];
 
 const main = async () => {
 	// get GeoJSON data
@@ -7,16 +8,24 @@ const main = async () => {
 	// get CSV data
 	let csvData = (await (await fetch('HIP_zip_clean.csv')).text()).split('\r\n');
 	// clean data
-	csvData.shift();
+	providers = csvData.shift().split(',');
 	csvData = csvData.map(line => line.split(',')).filter(array => array.length > 1);
-	csvData = csvData.map(array => [array[0], (array[array.length - 1])]);
 	for (const keyValuePair of csvData) {
-		csvDataObject[keyValuePair[0]] = parseFloat(keyValuePair[1]);
+		csvDataObject[keyValuePair[0]] = keyValuePair.slice(1).map(value => parseInt(value));
 	}
 
 	// get HIP location data (hardcoded)
-	let HIPLocationsCoordinates = [["AIDS Healthcare Foundation Men's Wellness Clinic-South Beach", "25.7893881", "-80.1409799"], ["AHF- Jackson North", "25.9306385", "-80.2025155"], ["CAN Community Health (North Beach)", "25.941077181818184", "-80.27761418181818"], ["CAN Community Health (South Beach)", "25.773899215968495", "-80.13420298721049"], ["CareFirst Foundation Inc.", "25.8841012", "-80.2095468"], ["Community Health & Empowerment Network", "25.883731333333333", "-80.21281793939394"], ["Community Health of S. Florida, Inc.", "25.5654423", "-80.35775694105419"], ["Health Education Prevention & Promotion, Inc. ", "25.7508964", "-80.2283979"], ["Homestead Hospital", "25.4800698", "-80.4302564"], ["Hope for Miami", "25.7773878", "-80.26427137425898"], ["Jackson Memorial (Main)", "25.791670500000002", "-80.21260146013265"], ["Jackson Memorial (North)", "25.93023675", "-80.20325480474534"], ["Jackson Memorial (South)", "25.629649649999998", "-80.34587768318102"], ["Latinos Salud ", "25.74430115", "-80.3524967499066"], ["Positively U Inc.", "25.670801559846513", "-80.37249040844505"], ["Soul Sisters Leadership Collective", "25.7947508", "-80.2065118"], ["Survivors Pathway Corporation", "25.751048249999997", "-80.22430758474164"], ["UM Adolescent Medicine", "25.79090002020202", "-80.21093598989899"], ["UM - IDEA Exchange", "25.473437", "-80.486573"]];
-
+	let HIPLocations = (await (await fetch('EHE.tsv')).text()).split('\r\n');
+	// clean data
+	HIPLocations.shift();
+	HIPLocations = HIPLocations.map(line => line.split('\t')).filter(array => array.length > 1);
+	HIPLocations.forEach(array => {
+		array.forEach(entry => {
+			entry = entry.replace(/"/g, '');
+			entry.trim();
+		})
+	})
+	
 	// create map and center
 	const map = L.map('map').setView([25.6, -80.3], 10);
 
@@ -28,7 +37,11 @@ const main = async () => {
 
 	// add GeoJSON layer, style it
 	L.geoJSON(geoJSONData, {
-		style: getStyle
+		style: getStyle,
+		onEachFeature: (feature, layer) => {
+			layer.bindPopup(getProviders(feature.properties.ZIP), {closeOnClick: false, autoClose: false})
+			layer.bindTooltip('<strong>' + feature.properties.ZIP + '</strong>', {permanent: true, direction: 'center', className: 'map-zipcode-label'}).openTooltip();
+		}
 	}).addTo(map);
 
 	// add HIP location markers
@@ -37,8 +50,9 @@ const main = async () => {
 		iconSize: [24, 24], // size of the icon
 		iconAnchor: [12, 12], // point of the icon which will correspond to marker's location
 	});
-	for (const HIPLocation of HIPLocationsCoordinates) {
-		L.marker([HIPLocation[1], HIPLocation[2]], { icon: triangleIcon }).addTo(map);
+	for (const HIPLocation of HIPLocations) {
+		L.marker([HIPLocation[2], HIPLocation[3]], { icon: triangleIcon, zIndexOffset: 10000 }).addTo(map).
+			bindPopup("<strong>" + HIPLocation[0] + "</strong><br>" + HIPLocation[1], {closeOnClick: false, autoClose: false});
 	}
 
 	// add scale
@@ -55,7 +69,7 @@ const main = async () => {
 
 		for (let i = 0; i < grades.length; i++) {
 			labels.push(
-				'<div class="map-legend-entry"><div class="map-legend-color" style="background-color:' + getColor(grades[i]) + '"></div>' + 
+				'<div class="map-legend-entry"><div class="map-legend-color" style="background-color:' + getColor(grades[i]) + '"></div>' +
 				'<p class="map-legend-label">' + (grades[i] + (i === grades.length - 1 ? '+' : '') + '</p></div>')
 			)
 		}
@@ -87,7 +101,27 @@ const getStyle = (feature) => {
 }
 
 const getCount = (zip) => {
-	return csvDataObject[zip] || 0;
+	if (csvDataObject[zip] === undefined) {
+		return 0;
+	}
+
+	return csvDataObject[zip][csvDataObject[zip].length - 1];
+}
+
+const getProviders = (zip) => {
+	if (csvDataObject[zip] === undefined) {
+		return "No Providers";
+	}
+
+	let providersText = "<strong>Providers: </strong><br>";
+
+	for (let i = 1; i < providers.length - 1; i++) {
+		if (csvDataObject[zip][i] > 0) {
+			providersText += providers[i] + "<br>";
+		}
+	}
+
+	return providersText;
 }
 
 const getColor = (value) => {

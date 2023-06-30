@@ -50,10 +50,21 @@ body {
 	text-align: center;
 }
 
+.map-zipcode-label {
+	background: none;
+	border: none;
+	box-shadow: none;
+	font-size: 0.6rem;
+}
+
 .leaflet-container {
 	font-family: monospace;
 }
 
 .leaflet-control-zoom-in, .leaflet-control-zoom-out {
 	font-family: inherit;
+}
+
+.leaflet-tooltip-pane {
+	z-index: 400;
 }
