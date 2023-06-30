@@ -8,7 +8,7 @@ const main = async () => {
 	// get CSV data
 	let csvData = (await (await fetch('HIP_zip_clean.csv')).text()).split('\r\n');
 	// clean data
-	providers = csvData.shift().split(',');
+	providers = csvData.shift().split(',').slice(1, -1);
 	csvData = csvData.map(line => line.split(',')).filter(array => array.length > 1);
 	for (const keyValuePair of csvData) {
 		csvDataObject[keyValuePair[0]] = keyValuePair.slice(1).map(value => parseInt(value));
@@ -115,7 +115,7 @@ const getProviders = (zip) => {
 
 	let providersText = "<strong>Providers: </strong><br>";
 
-	for (let i = 1; i < providers.length - 1; i++) {
+	for (let i = 0; i < providers.length; i++) {
 		if (csvDataObject[zip][i] > 0) {
 			providersText += providers[i] + "<br>";
 		}
