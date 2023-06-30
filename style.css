@@ -10,7 +10,50 @@ body {
 }
 
 .map-text-labels {
-	font-size: 2em;
+	font-size: 2rem;
 	font-weight: 700;
 	color: white;
+}
+
+.map-legend {
+	font-family: monospace;
+	background-color: rgba(255, 255, 255, 0.8);
+	padding: 1rem;
+	border-radius: 3px;
+}
+
+#map-legend-title {
+	font-size: 1rem;
+	margin-bottom: 1rem;
+}
+
+
+.map-legend-entry {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-around;
+	margin-top: 0.5rem; 
+}
+
+.map-legend-color {
+	width: 3rem;
+	height: 1rem;
+	border: 2px solid black;
+	border-radius: 2px;
+}
+
+.map-legend-label {
+	margin: 0;
+	padding: 0;
+	font-size: 1rem;
+	width: 2rem;
+	text-align: center;
+}
+
+.leaflet-container {
+	font-family: monospace;
+}
+
+.leaflet-control-zoom-in, .leaflet-control-zoom-out {
+	font-family: inherit;
 }
